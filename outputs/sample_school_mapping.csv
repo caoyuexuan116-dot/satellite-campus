@@ -1,0 +1,11 @@
+﻿school_id,school_cn,wos_file,treated,relo_year,sample_role,note
+1,北京理工大学,Beijing Institute of Technology.xlsx,1,2007,original_treat,良乡校区；同城新建多校区
+2,中央财经大学,Central University of Finance & Economics.xlsx,1,2009,original_treat,沙河校区；同城新建多校区
+3,暨南大学,Jinan University.xlsx,1,2014,original_treat,番禺校区；同城新建多校区；不可误用 University of Jinan
+4,华东理工大学,East China University of Science & Technology.xlsx,1,2007,original_treat,奉贤校区；同城新建多校区
+5,东华大学,Donghua University.xlsx,1,2003,replacement_treat,替代南京大学；松江校区；同城新建多校区
+6,北京交通大学,Beijing Jiaotong University.xlsx,0,,original_control,威海校区为异地，不属于同城处理
+7,对外经济贸易大学,University of International Business & Economics.xlsx,0,,original_control,青岛国际校区为异地/建设信息，不属于同城处理
+8,北京工业大学,Beijing University of Technology.xlsx,0,,original_control,通州校区早于窗口期且本地表未列为同城处理
+9,中国传媒大学,Communication University of China.xlsx,0,,replacement_control,替代上海财经大学；本地搬迁表无多校区记录，官网概况列北京定福庄地址
+10,中国政法大学,China University of Political Science & Law.xlsx,0,,replacement_control,替代上海大学；昌平校区 1987 年，早于窗口期

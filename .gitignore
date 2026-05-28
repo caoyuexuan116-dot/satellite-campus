@@ -1,0 +1,7 @@
+# Large generated WOS panel artifacts kept locally.
+outputs/wos_author_paper_sample.csv
+outputs/wos_author_year_panel_sample.csv
+outputs/wos_author_year_panel_sample.dta
+
+# Stata may write an extra copy at the repository root when run interactively.
+/baseline_did_sample.log

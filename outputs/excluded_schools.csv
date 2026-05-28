@@ -1,0 +1,4 @@
+﻿school_cn,expected_wos_file,reason,must_be_absent
+上海财经大学,Shanghai University of Finance & Economics.xlsx,用户要求剔除；对照组在窗口期和之前均不得有多校区,0
+南京大学,Nanjing University.xlsx,当前 WOS 文件夹未找到对应文件，不能虚填,1
+上海大学,Shanghai University.xlsx,当前 WOS 文件夹未找到对应文件，不能虚填,1
