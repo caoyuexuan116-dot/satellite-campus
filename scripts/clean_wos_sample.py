@@ -14,6 +14,9 @@ YEAR_MIN = 2000
 YEAR_MAX = 2022
 
 
+# Fixed 5:5 pilot sample. Treatment schools opened same-city satellite campuses
+# within the study window; strict controls have no local relocation-workbook
+# campus record before or during the window.
 SCHOOLS = [
     {
         "school_cn": "北京理工大学",
@@ -143,6 +146,8 @@ EXCLUDED = [
 ]
 
 
+# Author-paper output: one row per WOS paper-author pair after splitting
+# `Author Full Names` by semicolon.
 PAPER_FIELDS = [
     "school_id",
     "school_cn",
@@ -167,6 +172,8 @@ PAPER_FIELDS = [
 ]
 
 
+# Person-year output: a balanced panel over 2000-2022 for every observed person.
+# Years without observed papers are written as zero-output rows.
 PANEL_FIELDS = [
     "school_id",
     "school_cn",
@@ -216,10 +223,12 @@ def split_semicolon(value: object) -> list[str]:
 
 
 def norm_name(name: str) -> str:
+    """Normalize names for conservative ORCID matching and fallback IDs."""
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
 def parse_orcids(value: object) -> dict[str, str]:
+    """Parse WoS ORCID cells of the form 'Name/0000-....; Name/0000-....'."""
     pairs: dict[str, str] = {}
     for part in split_semicolon(value):
         if "/" not in part:
@@ -240,6 +249,7 @@ def require_columns(headers: list[str], required: list[str], file_name: str) -> 
 
 
 def validate_sample() -> None:
+    """Fail early if the fixed sample is unbalanced or references wrong files."""
     missing_files = []
     for school in SCHOOLS:
         path = WOS_DIR / school["wos_file"]
@@ -263,6 +273,7 @@ def validate_sample() -> None:
 
 
 def write_metadata() -> None:
+    """Write small audit tables so sample choices can be inspected without code."""
     OUTPUT_DIR.mkdir(exist_ok=True)
     with (OUTPUT_DIR / "sample_school_mapping.csv").open("w", newline="", encoding="utf-8-sig") as f:
         fieldnames = ["school_id", "school_cn", "wos_file", "treated", "relo_year", "sample_role", "note"]
@@ -288,6 +299,8 @@ def main() -> None:
     aggregates: dict[tuple[int, str, int], dict[str, float]] = defaultdict(
         lambda: {"pub_count": 0.0, "cites_wos_core_sum": 0.0, "cites_all_db_sum": 0.0}
     )
+    # `aggregates` accumulates paper counts and citation sums by school-person-year.
+    # `persons` stores one canonical row per observed school-person for panel expansion.
     persons: dict[tuple[int, str], dict[str, object]] = {}
     school_stats: list[dict[str, object]] = []
 
@@ -332,6 +345,8 @@ def main() -> None:
                 if year is None or year < YEAR_MIN or year > YEAR_MAX:
                     continue
 
+                # WoS stores full author names as a semicolon-separated list.
+                # This first-stage test intentionally ignores full name disambiguation.
                 authors = split_semicolon(row[idx["Author Full Names"]])
                 if not authors:
                     continue
@@ -347,6 +362,8 @@ def main() -> None:
                 for author in authors:
                     normalized = norm_name(author)
                     matched_orcid = orcid_by_name.get(normalized, "")
+                    # Use ORCID only when the ORCID name exactly matches this author
+                    # after normalization; otherwise fall back to school + full name.
                     if matched_orcid:
                         person_id = f"orcid:{matched_orcid}"
                         person_id_type = "orcid"
@@ -357,6 +374,8 @@ def main() -> None:
 
                     author_rows += 1
                     key = (school_id, person_id, year)
+                    # Counts and citation sums are author-level credit: each listed
+                    # author receives one publication count and the paper citation value.
                     aggregates[key]["pub_count"] += 1
                     aggregates[key]["cites_wos_core_sum"] += cites_wos_core
                     aggregates[key]["cites_all_db_sum"] += cites_all_db
@@ -422,6 +441,8 @@ def main() -> None:
             treated = int(person["treated"])
             relo_year_value = person["relo_year"]
             relo_year = int(relo_year_value) if relo_year_value != "" else None
+            # Expand every observed person to all calendar years in the window.
+            # This makes absence of publications explicit instead of dropping those years.
             for year in range(YEAR_MIN, YEAR_MAX + 1):
                 post = int(treated == 1 and relo_year is not None and year >= relo_year)
                 did = treated * post
