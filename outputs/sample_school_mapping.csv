@@ -1,11 +1,11 @@
-﻿school_id,school_cn,wos_file,treated,relo_year,sample_role,note
-1,北京理工大学,Beijing Institute of Technology.xlsx,1,2007,original_treat,良乡校区；同城新建多校区
-2,中央财经大学,Central University of Finance & Economics.xlsx,1,2009,original_treat,沙河校区；同城新建多校区
-3,暨南大学,Jinan University.xlsx,1,2014,original_treat,番禺校区；同城新建多校区；不可误用 University of Jinan
-4,华东理工大学,East China University of Science & Technology.xlsx,1,2007,original_treat,奉贤校区；同城新建多校区
-5,东华大学,Donghua University.xlsx,1,2003,replacement_treat,替代南京大学；松江校区；同城新建多校区
-6,中国传媒大学,Communication University of China.xlsx,0,,strict_control,本地搬迁表无记录；官网招生简介列北京定福庄东街一号
-7,东北林业大学,Northeast Forestry University - China.xlsx,0,,strict_control,本地搬迁表无记录；教育部章程核准书列哈尔滨市香坊区和兴路26号
-8,东北农业大学,Northeast Agricultural University - China.xlsx,0,,strict_control,本地搬迁表无记录；公开资料列哈尔滨市香坊区长江路600号
-9,广西大学,Guangxi University.xlsx,0,,strict_control,本地搬迁表无记录；学校章程列南宁市大学东路100号
-10,中央音乐学院,Central Conservatory of Music.xlsx,0,,strict_control,本地搬迁表无记录；官网联系方式列北京市西城区鲍家街43号；WOS 量较小
+﻿school_id,school_cn,wos_file,treated,relo_year,sample_role,address_aliases,note
+1,北京理工大学,Beijing Institute of Technology.xlsx,1,2007,original_treat,Beijing Inst Technol,良乡校区；同城新建多校区
+2,中央财经大学,Central University of Finance & Economics.xlsx,1,2009,original_treat,Cent Univ Finance & Econ; Central Univ Finance & Econ,沙河校区；同城新建多校区
+3,暨南大学,Jinan University.xlsx,1,2014,original_treat,Jinan Univ,番禺校区；同城新建多校区；不可误用 University of Jinan
+4,华东理工大学,East China University of Science & Technology.xlsx,1,2007,original_treat,East China Univ Sci & Technol,奉贤校区；同城新建多校区
+5,东华大学,Donghua University.xlsx,1,2003,replacement_treat,Donghua Univ,替代南京大学；松江校区；同城新建多校区
+6,中国传媒大学,Communication University of China.xlsx,0,,strict_control,Commun Univ China,本地搬迁表无记录；官网招生简介列北京定福庄东街一号
+7,东北林业大学,Northeast Forestry University - China.xlsx,0,,strict_control,Northeast Forestry Univ,本地搬迁表无记录；教育部章程核准书列哈尔滨市香坊区和兴路26号
+8,东北农业大学,Northeast Agricultural University - China.xlsx,0,,strict_control,Northeast Agr Univ; Northeast Agric Univ,本地搬迁表无记录；公开资料列哈尔滨市香坊区长江路600号
+9,广西大学,Guangxi University.xlsx,0,,strict_control,Guangxi Univ,本地搬迁表无记录；学校章程列南宁市大学东路100号
+10,中央音乐学院,Central Conservatory of Music.xlsx,0,,strict_control,Cent Conservatory Mus; Central Conservatory Mus,本地搬迁表无记录；官网联系方式列北京市西城区鲍家街43号；WOS 量较小

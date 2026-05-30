@@ -25,6 +25,7 @@ SCHOOLS = [
         "relo_year": 2007,
         "sample_role": "original_treat",
         "note": "良乡校区；同城新建多校区",
+        "address_aliases": ["Beijing Inst Technol"],
     },
     {
         "school_cn": "中央财经大学",
@@ -33,6 +34,7 @@ SCHOOLS = [
         "relo_year": 2009,
         "sample_role": "original_treat",
         "note": "沙河校区；同城新建多校区",
+        "address_aliases": ["Cent Univ Finance & Econ", "Central Univ Finance & Econ"],
     },
     {
         "school_cn": "暨南大学",
@@ -41,6 +43,7 @@ SCHOOLS = [
         "relo_year": 2014,
         "sample_role": "original_treat",
         "note": "番禺校区；同城新建多校区；不可误用 University of Jinan",
+        "address_aliases": ["Jinan Univ"],
     },
     {
         "school_cn": "华东理工大学",
@@ -49,6 +52,7 @@ SCHOOLS = [
         "relo_year": 2007,
         "sample_role": "original_treat",
         "note": "奉贤校区；同城新建多校区",
+        "address_aliases": ["East China Univ Sci & Technol"],
     },
     {
         "school_cn": "东华大学",
@@ -57,6 +61,7 @@ SCHOOLS = [
         "relo_year": 2003,
         "sample_role": "replacement_treat",
         "note": "替代南京大学；松江校区；同城新建多校区",
+        "address_aliases": ["Donghua Univ"],
     },
     {
         "school_cn": "中国传媒大学",
@@ -65,6 +70,7 @@ SCHOOLS = [
         "relo_year": None,
         "sample_role": "strict_control",
         "note": "本地搬迁表无记录；官网招生简介列北京定福庄东街一号",
+        "address_aliases": ["Commun Univ China"],
     },
     {
         "school_cn": "东北林业大学",
@@ -73,6 +79,7 @@ SCHOOLS = [
         "relo_year": None,
         "sample_role": "strict_control",
         "note": "本地搬迁表无记录；教育部章程核准书列哈尔滨市香坊区和兴路26号",
+        "address_aliases": ["Northeast Forestry Univ"],
     },
     {
         "school_cn": "东北农业大学",
@@ -81,6 +88,7 @@ SCHOOLS = [
         "relo_year": None,
         "sample_role": "strict_control",
         "note": "本地搬迁表无记录；公开资料列哈尔滨市香坊区长江路600号",
+        "address_aliases": ["Northeast Agr Univ", "Northeast Agric Univ"],
     },
     {
         "school_cn": "广西大学",
@@ -89,6 +97,7 @@ SCHOOLS = [
         "relo_year": None,
         "sample_role": "strict_control",
         "note": "本地搬迁表无记录；学校章程列南宁市大学东路100号",
+        "address_aliases": ["Guangxi Univ"],
     },
     {
         "school_cn": "中央音乐学院",
@@ -97,6 +106,7 @@ SCHOOLS = [
         "relo_year": None,
         "sample_role": "strict_control",
         "note": "本地搬迁表无记录；官网联系方式列北京市西城区鲍家街43号；WOS 量较小",
+        "address_aliases": ["Cent Conservatory Mus", "Central Conservatory Mus"],
     },
 ]
 
@@ -227,6 +237,11 @@ def norm_name(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
+def norm_org(text: str) -> str:
+    """Normalize organization/address text for school alias matching."""
+    return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
 def parse_orcids(value: object) -> dict[str, str]:
     """Parse WoS ORCID cells of the form 'Name/0000-....; Name/0000-....'."""
     pairs: dict[str, str] = {}
@@ -238,6 +253,41 @@ def parse_orcids(value: object) -> dict[str, str]:
         if re.fullmatch(r"\d{4}-\d{4}-\d{4}-[\dX]{4}", orcid):
             pairs[norm_name(name)] = orcid
     return pairs
+
+
+def parse_current_school_authors(addresses: object, aliases: list[str], authors: list[str]) -> set[str]:
+    """Return normalized author names whose WoS address block matches this school.
+
+    WoS `Addresses` usually looks like:
+    `[Author A; Author B] Univ Alias, Dept, City; [Author C] Other Univ, ...`.
+    This parser keeps Author A/B only if their block text contains a current-school
+    alias. If author-level brackets are absent, it only keeps a single-author paper
+    when the address contains a school alias; multi-author unbracketed rows are
+    dropped to avoid crediting outside collaborators to the current school.
+    """
+    text = clean_text(addresses)
+    if not text:
+        return set()
+
+    normalized_aliases = [norm_org(alias) for alias in aliases if alias]
+    if not normalized_aliases:
+        return set()
+
+    current_school_authors: set[str] = set()
+    blocks = re.findall(r"\[([^\]]+)\]\s*([^\[]+?)(?=;\s*\[|$)", text)
+    for block_authors, block_address in blocks:
+        if not any(alias in norm_org(block_address) for alias in normalized_aliases):
+            continue
+        for block_author in split_semicolon(block_authors):
+            current_school_authors.add(norm_name(block_author))
+
+    if blocks:
+        return current_school_authors
+
+    if len(authors) == 1 and any(alias in norm_org(text) for alias in normalized_aliases):
+        return {norm_name(authors[0])}
+
+    return set()
 
 
 def require_columns(headers: list[str], required: list[str], file_name: str) -> dict[str, int]:
@@ -276,11 +326,21 @@ def write_metadata() -> None:
     """Write small audit tables so sample choices can be inspected without code."""
     OUTPUT_DIR.mkdir(exist_ok=True)
     with (OUTPUT_DIR / "sample_school_mapping.csv").open("w", newline="", encoding="utf-8-sig") as f:
-        fieldnames = ["school_id", "school_cn", "wos_file", "treated", "relo_year", "sample_role", "note"]
+        fieldnames = [
+            "school_id",
+            "school_cn",
+            "wos_file",
+            "treated",
+            "relo_year",
+            "sample_role",
+            "address_aliases",
+            "note",
+        ]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for i, school in enumerate(SCHOOLS, start=1):
-            writer.writerow({"school_id": i, **school})
+            row = {**school, "school_id": i, "address_aliases": "; ".join(school["address_aliases"])}
+            writer.writerow(row)
 
     with (OUTPUT_DIR / "excluded_schools.csv").open("w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=["school_cn", "expected_wos_file", "reason", "must_be_absent"])
@@ -320,10 +380,13 @@ def main() -> None:
                     "code",
                     "EnglishName",
                     "Publication Type",
+                    "Authors",
                     "Author Full Names",
                     "Article Title",
                     "Source Title",
                     "Document Type",
+                    "Addresses",
+                    "Affiliations",
                     "Publication Year",
                     "DOI",
                     "Times Cited, WoS Core",
@@ -337,7 +400,11 @@ def main() -> None:
             source_rows = 0
             in_window_rows = 0
             author_rows = 0
+            current_school_author_rows = 0
+            dropped_non_school_author_rows = 0
+            duplicate_author_paper_rows = 0
             orcid_matches = 0
+            seen_author_paper: set[tuple[int, str, str]] = set()
 
             for row in ws.iter_rows(min_row=2, values_only=True):
                 source_rows += 1
@@ -352,15 +419,25 @@ def main() -> None:
                     continue
 
                 in_window_rows += 1
+                current_school_authors = parse_current_school_authors(
+                    row[idx["Addresses"]],
+                    list(school["address_aliases"]),
+                    authors,
+                )
                 orcid_by_name = parse_orcids(row[idx["ORCIDs"]])
                 cites_wos_core = parse_float(row[idx["Times Cited, WoS Core"]])
                 cites_all_db = parse_float(row[idx["Times Cited, All Databases"]])
+                ut = clean_text(row[idx["UT (Unique WOS ID)"]])
                 relo_year = school["relo_year"]
                 treated = int(school["treated"])
                 post = int(treated == 1 and relo_year is not None and year >= int(relo_year))
 
                 for author in authors:
                     normalized = norm_name(author)
+                    if normalized not in current_school_authors:
+                        dropped_non_school_author_rows += 1
+                        continue
+
                     matched_orcid = orcid_by_name.get(normalized, "")
                     # Use ORCID only when the ORCID name exactly matches this author
                     # after normalization; otherwise fall back to school + full name.
@@ -372,6 +449,13 @@ def main() -> None:
                         person_id = f"school_name:{school_id}:{normalized}"
                         person_id_type = "school_name"
 
+                    author_paper_key = (school_id, person_id, ut)
+                    if author_paper_key in seen_author_paper:
+                        duplicate_author_paper_rows += 1
+                        continue
+                    seen_author_paper.add(author_paper_key)
+
+                    current_school_author_rows += 1
                     author_rows += 1
                     key = (school_id, person_id, year)
                     # Counts and citation sums are author-level credit: each listed
@@ -403,7 +487,7 @@ def main() -> None:
                             "person_id_type": person_id_type,
                             "author_full_name": author,
                             "matched_orcid": matched_orcid,
-                            "ut": clean_text(row[idx["UT (Unique WOS ID)"]]),
+                            "ut": ut,
                             "doi": clean_text(row[idx["DOI"]]),
                             "article_title": clean_text(row[idx["Article Title"]]),
                             "source_title": clean_text(row[idx["Source Title"]]),
@@ -421,13 +505,17 @@ def main() -> None:
                     "source_rows": source_rows,
                     "in_window_paper_rows": in_window_rows,
                     "author_paper_rows": author_rows,
+                    "current_school_author_rows": current_school_author_rows,
+                    "dropped_non_school_author_rows": dropped_non_school_author_rows,
+                    "duplicate_author_paper_rows": duplicate_author_paper_rows,
                     "orcid_matches": orcid_matches,
                 }
             )
             wb.close()
             print(
                 f"Finished {school['school_cn']}: source_rows={source_rows}, "
-                f"in_window_paper_rows={in_window_rows}, author_paper_rows={author_rows}",
+                f"in_window_paper_rows={in_window_rows}, current_school_author_rows={current_school_author_rows}, "
+                f"dropped_non_school_author_rows={dropped_non_school_author_rows}",
                 flush=True,
             )
 
@@ -472,6 +560,9 @@ def main() -> None:
             f.write(
                 "{school_cn}\t{wos_file}\tsource_rows={source_rows}\t"
                 "in_window_paper_rows={in_window_paper_rows}\tauthor_paper_rows={author_paper_rows}\t"
+                "current_school_author_rows={current_school_author_rows}\t"
+                "dropped_non_school_author_rows={dropped_non_school_author_rows}\t"
+                "duplicate_author_paper_rows={duplicate_author_paper_rows}\t"
                 "orcid_matches={orcid_matches}\n".format(**stat)
             )
         f.write(f"\nUnique persons: {len(persons)}\n")

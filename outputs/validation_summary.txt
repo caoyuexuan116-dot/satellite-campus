@@ -7,18 +7,18 @@ Excluded schools: 南京大学 and 上海大学 because expected WOS files are a
 Control definition: no multicampus before or during the study window.
 Strict controls are selected from schools with no record in the local campus relocation workbook and with WOS data.
 
-北京理工大学	Beijing Institute of Technology.xlsx	source_rows=66474	in_window_paper_rows=64475	author_paper_rows=308803	orcid_matches=41615
-中央财经大学	Central University of Finance & Economics.xlsx	source_rows=4943	in_window_paper_rows=4785	author_paper_rows=16261	orcid_matches=2579
-暨南大学	Jinan University.xlsx	source_rows=38349	in_window_paper_rows=37379	author_paper_rows=283738	orcid_matches=33056
-华东理工大学	East China University of Science & Technology.xlsx	source_rows=40965	in_window_paper_rows=39241	author_paper_rows=220815	orcid_matches=29886
-东华大学	Donghua University.xlsx	source_rows=27123	in_window_paper_rows=26514	author_paper_rows=129844	orcid_matches=18032
-中国传媒大学	Communication University of China.xlsx	source_rows=3665	in_window_paper_rows=3604	author_paper_rows=12376	orcid_matches=732
-东北林业大学	Northeast Forestry University - China.xlsx	source_rows=13303	in_window_paper_rows=13032	author_paper_rows=67388	orcid_matches=7106
-东北农业大学	Northeast Agricultural University - China.xlsx	source_rows=11842	in_window_paper_rows=11617	author_paper_rows=77424	orcid_matches=5918
-广西大学	Guangxi University.xlsx	source_rows=22134	in_window_paper_rows=21498	author_paper_rows=319469	orcid_matches=15367
-中央音乐学院	Central Conservatory of Music.xlsx	source_rows=28	in_window_paper_rows=26	author_paper_rows=109	orcid_matches=4
+北京理工大学	Beijing Institute of Technology.xlsx	source_rows=66474	in_window_paper_rows=64475	author_paper_rows=183191	current_school_author_rows=183191	dropped_non_school_author_rows=125581	duplicate_author_paper_rows=31	orcid_matches=21655
+中央财经大学	Central University of Finance & Economics.xlsx	source_rows=4943	in_window_paper_rows=4785	author_paper_rows=6731	current_school_author_rows=6731	dropped_non_school_author_rows=9530	duplicate_author_paper_rows=0	orcid_matches=868
+暨南大学	Jinan University.xlsx	source_rows=38349	in_window_paper_rows=37379	author_paper_rows=115556	current_school_author_rows=115556	dropped_non_school_author_rows=168167	duplicate_author_paper_rows=15	orcid_matches=12760
+华东理工大学	East China University of Science & Technology.xlsx	source_rows=40965	in_window_paper_rows=39241	author_paper_rows=72731	current_school_author_rows=72731	dropped_non_school_author_rows=148076	duplicate_author_paper_rows=8	orcid_matches=10158
+东华大学	Donghua University.xlsx	source_rows=27123	in_window_paper_rows=26514	author_paper_rows=76108	current_school_author_rows=76108	dropped_non_school_author_rows=53711	duplicate_author_paper_rows=25	orcid_matches=9878
+中国传媒大学	Communication University of China.xlsx	source_rows=3665	in_window_paper_rows=3604	author_paper_rows=8652	current_school_author_rows=8652	dropped_non_school_author_rows=3723	duplicate_author_paper_rows=1	orcid_matches=331
+东北林业大学	Northeast Forestry University - China.xlsx	source_rows=13303	in_window_paper_rows=13032	author_paper_rows=33766	current_school_author_rows=33766	dropped_non_school_author_rows=33619	duplicate_author_paper_rows=3	orcid_matches=3495
+东北农业大学	Northeast Agricultural University - China.xlsx	source_rows=11842	in_window_paper_rows=11617	author_paper_rows=47145	current_school_author_rows=47145	dropped_non_school_author_rows=30274	duplicate_author_paper_rows=5	orcid_matches=3073
+广西大学	Guangxi University.xlsx	source_rows=22134	in_window_paper_rows=21498	author_paper_rows=69075	current_school_author_rows=69075	dropped_non_school_author_rows=250377	duplicate_author_paper_rows=17	orcid_matches=7374
+中央音乐学院	Central Conservatory of Music.xlsx	source_rows=28	in_window_paper_rows=26	author_paper_rows=33	current_school_author_rows=33	dropped_non_school_author_rows=76	duplicate_author_paper_rows=0	orcid_matches=0
 
-Unique persons: 345679
-Person-year rows: 7950617
+Unique persons: 119234
+Person-year rows: 2742382
 Author-paper CSV: outputs\wos_author_paper_sample.csv
 Person-year CSV: outputs\wos_author_year_panel_sample.csv
