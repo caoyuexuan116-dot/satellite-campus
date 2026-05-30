@@ -56,48 +56,72 @@ SCHOOLS = [
         "note": "替代南京大学；松江校区；同城新建多校区",
     },
     {
-        "school_cn": "北京交通大学",
-        "wos_file": "Beijing Jiaotong University.xlsx",
-        "treated": 0,
-        "relo_year": None,
-        "sample_role": "original_control",
-        "note": "威海校区为异地，不属于同城处理",
-    },
-    {
-        "school_cn": "对外经济贸易大学",
-        "wos_file": "University of International Business & Economics.xlsx",
-        "treated": 0,
-        "relo_year": None,
-        "sample_role": "original_control",
-        "note": "青岛国际校区为异地/建设信息，不属于同城处理",
-    },
-    {
-        "school_cn": "北京工业大学",
-        "wos_file": "Beijing University of Technology.xlsx",
-        "treated": 0,
-        "relo_year": None,
-        "sample_role": "original_control",
-        "note": "通州校区早于窗口期且本地表未列为同城处理",
-    },
-    {
         "school_cn": "中国传媒大学",
         "wos_file": "Communication University of China.xlsx",
         "treated": 0,
         "relo_year": None,
-        "sample_role": "replacement_control",
-        "note": "替代上海财经大学；本地搬迁表无多校区记录，官网概况列北京定福庄地址",
+        "sample_role": "strict_control",
+        "note": "本地搬迁表无记录；官网招生简介列北京定福庄东街一号",
     },
     {
-        "school_cn": "中国政法大学",
-        "wos_file": "China University of Political Science & Law.xlsx",
+        "school_cn": "东北林业大学",
+        "wos_file": "Northeast Forestry University - China.xlsx",
         "treated": 0,
         "relo_year": None,
-        "sample_role": "replacement_control",
-        "note": "替代上海大学；昌平校区 1987 年，早于窗口期",
+        "sample_role": "strict_control",
+        "note": "本地搬迁表无记录；教育部章程核准书列哈尔滨市香坊区和兴路26号",
+    },
+    {
+        "school_cn": "东北农业大学",
+        "wos_file": "Northeast Agricultural University - China.xlsx",
+        "treated": 0,
+        "relo_year": None,
+        "sample_role": "strict_control",
+        "note": "本地搬迁表无记录；公开资料列哈尔滨市香坊区长江路600号",
+    },
+    {
+        "school_cn": "广西大学",
+        "wos_file": "Guangxi University.xlsx",
+        "treated": 0,
+        "relo_year": None,
+        "sample_role": "strict_control",
+        "note": "本地搬迁表无记录；学校章程列南宁市大学东路100号",
+    },
+    {
+        "school_cn": "中央音乐学院",
+        "wos_file": "Central Conservatory of Music.xlsx",
+        "treated": 0,
+        "relo_year": None,
+        "sample_role": "strict_control",
+        "note": "本地搬迁表无记录；官网联系方式列北京市西城区鲍家街43号；WOS 量较小",
     },
 ]
 
 EXCLUDED = [
+    {
+        "school_cn": "北京交通大学",
+        "expected_wos_file": "Beijing Jiaotong University.xlsx",
+        "reason": "用户收紧口径；对照组在窗口期和之前均不得有多校区，北交威海校区不再保留",
+        "must_be_absent": 0,
+    },
+    {
+        "school_cn": "对外经济贸易大学",
+        "expected_wos_file": "University of International Business & Economics.xlsx",
+        "reason": "用户收紧口径；对照组在窗口期和之前均不得有多校区，贸大青岛校区建设信息不再保留",
+        "must_be_absent": 0,
+    },
+    {
+        "school_cn": "北京工业大学",
+        "expected_wos_file": "Beijing University of Technology.xlsx",
+        "reason": "用户收紧口径；对照组在窗口期和之前均不得有多校区，北工大通州校区记录不再保留",
+        "must_be_absent": 0,
+    },
+    {
+        "school_cn": "中国政法大学",
+        "expected_wos_file": "China University of Political Science & Law.xlsx",
+        "reason": "用户收紧口径；对照组在窗口期和之前均不得有多校区，中国政法大学昌平校区记录不再保留",
+        "must_be_absent": 0,
+    },
     {
         "school_cn": "上海财经大学",
         "expected_wos_file": "Shanghai University of Finance & Economics.xlsx",
@@ -273,6 +297,7 @@ def main() -> None:
 
         for school_id, school in enumerate(SCHOOLS, start=1):
             file_path = WOS_DIR / school["wos_file"]
+            print(f"Reading {school_id}/{len(SCHOOLS)}: {school['school_cn']} ({school['wos_file']})", flush=True)
             wb = load_workbook(file_path, read_only=True, data_only=True)
             ws = wb[wb.sheetnames[0]]
             headers = [clean_text(cell.value) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
@@ -381,7 +406,13 @@ def main() -> None:
                 }
             )
             wb.close()
+            print(
+                f"Finished {school['school_cn']}: source_rows={source_rows}, "
+                f"in_window_paper_rows={in_window_rows}, author_paper_rows={author_rows}",
+                flush=True,
+            )
 
+    print(f"Writing balanced person-year panel for {len(persons)} persons", flush=True)
     with panel_path.open("w", newline="", encoding="utf-8-sig") as f_panel:
         panel_writer = csv.DictWriter(f_panel, fieldnames=PANEL_FIELDS)
         panel_writer.writeheader()
@@ -413,9 +444,9 @@ def main() -> None:
         f.write(f"Window: {YEAR_MIN}-{YEAR_MAX}\n")
         f.write("Sample balance: treated=5, control=5\n")
         f.write("Panel construction: balanced person-year rows for every observed person over 2000-2022.\n")
-        f.write("Excluded schools: 南京大学 and 上海大学 because expected WOS files are absent; 上海财经大学 because it fails the strict control rule.\n")
+        f.write("Excluded schools: 南京大学 and 上海大学 because expected WOS files are absent; 北京交通大学、对外经济贸易大学、北京工业大学、上海财经大学、中国政法大学 because they fail the strict control rule.\n")
         f.write("Control definition: no multicampus before or during the study window.\n")
-        f.write("Shanghai University of Finance & Economics is excluded under the strict control rule.\n\n")
+        f.write("Strict controls are selected from schools with no record in the local campus relocation workbook and with WOS data.\n\n")
         for stat in school_stats:
             f.write(
                 "{school_cn}\t{wos_file}\tsource_rows={source_rows}\t"

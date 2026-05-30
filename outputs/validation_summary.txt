@@ -3,22 +3,22 @@
 Window: 2000-2022
 Sample balance: treated=5, control=5
 Panel construction: balanced person-year rows for every observed person over 2000-2022.
-Excluded schools: 南京大学 and 上海大学 because expected WOS files are absent; 上海财经大学 because it fails the strict control rule.
+Excluded schools: 南京大学 and 上海大学 because expected WOS files are absent; 北京交通大学、对外经济贸易大学、北京工业大学、上海财经大学、中国政法大学 because they fail the strict control rule.
 Control definition: no multicampus before or during the study window.
-Shanghai University of Finance & Economics is excluded under the strict control rule.
+Strict controls are selected from schools with no record in the local campus relocation workbook and with WOS data.
 
 北京理工大学	Beijing Institute of Technology.xlsx	source_rows=66474	in_window_paper_rows=64475	author_paper_rows=308803	orcid_matches=41615
 中央财经大学	Central University of Finance & Economics.xlsx	source_rows=4943	in_window_paper_rows=4785	author_paper_rows=16261	orcid_matches=2579
 暨南大学	Jinan University.xlsx	source_rows=38349	in_window_paper_rows=37379	author_paper_rows=283738	orcid_matches=33056
 华东理工大学	East China University of Science & Technology.xlsx	source_rows=40965	in_window_paper_rows=39241	author_paper_rows=220815	orcid_matches=29886
 东华大学	Donghua University.xlsx	source_rows=27123	in_window_paper_rows=26514	author_paper_rows=129844	orcid_matches=18032
-北京交通大学	Beijing Jiaotong University.xlsx	source_rows=42431	in_window_paper_rows=41504	author_paper_rows=167930	orcid_matches=18367
-对外经济贸易大学	University of International Business & Economics.xlsx	source_rows=3859	in_window_paper_rows=3697	author_paper_rows=12475	orcid_matches=2175
-北京工业大学	Beijing University of Technology.xlsx	source_rows=35684	in_window_paper_rows=34648	author_paper_rows=170856	orcid_matches=18058
 中国传媒大学	Communication University of China.xlsx	source_rows=3665	in_window_paper_rows=3604	author_paper_rows=12376	orcid_matches=732
-中国政法大学	China University of Political Science & Law.xlsx	source_rows=1459	in_window_paper_rows=1430	author_paper_rows=4275	orcid_matches=400
+东北林业大学	Northeast Forestry University - China.xlsx	source_rows=13303	in_window_paper_rows=13032	author_paper_rows=67388	orcid_matches=7106
+东北农业大学	Northeast Agricultural University - China.xlsx	source_rows=11842	in_window_paper_rows=11617	author_paper_rows=77424	orcid_matches=5918
+广西大学	Guangxi University.xlsx	source_rows=22134	in_window_paper_rows=21498	author_paper_rows=319469	orcid_matches=15367
+中央音乐学院	Central Conservatory of Music.xlsx	source_rows=28	in_window_paper_rows=26	author_paper_rows=109	orcid_matches=4
 
-Unique persons: 353589
-Person-year rows: 8132547
+Unique persons: 345679
+Person-year rows: 7950617
 Author-paper CSV: outputs\wos_author_paper_sample.csv
 Person-year CSV: outputs\wos_author_year_panel_sample.csv
