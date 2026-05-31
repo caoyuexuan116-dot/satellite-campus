@@ -5,6 +5,7 @@ outputs/wos_author_year_panel_sample.dta
 
 # Stata may write an extra copy at the repository root when run interactively.
 /baseline_did_sample.log
+/drop_central_music_sensitivity.log
 
 # Python bytecode caches.
 __pycache__/
