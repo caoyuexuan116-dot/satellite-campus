@@ -8,15 +8,38 @@ from pathlib import Path
 from openpyxl import load_workbook
 
 
+# =============================================================================
+# 0. Global configuration
+# =============================================================================
+# This script is the data-cleaning code behind the current reported results.
+# Pipeline:
+#   1) read each school-level WoS Excel workbook;
+#   2) split `Author Full Names` into author-level rows;
+#   3) use WoS `Addresses` to keep only authors affiliated with the current school;
+#   4) deduplicate same school-person-paper records by UT + person_id;
+#   5) aggregate author-paper rows to a balanced person-year panel for Stata.
+#
+# Important: this is still a pilot sample and still ignores true name
+# disambiguation when ORCID is unavailable. The fallback person_id is
+# school + normalized full name, so homonyms inside a school can still merge.
 WOS_DIR = Path(r"D:\数据\WOS数据（数据不超过10w条的学校）")
 OUTPUT_DIR = Path("outputs")
 YEAR_MIN = 2000
 YEAR_MAX = 2022
 
 
+# =============================================================================
+# 1. Sample definition and affiliation aliases
+# =============================================================================
 # Fixed 5:5 pilot sample. Treatment schools opened same-city satellite campuses
 # within the study window; strict controls have no local relocation-workbook
 # campus record before or during the window.
+#
+# `address_aliases` are the English organization strings expected inside WoS
+# `Addresses`. These aliases are deliberately conservative: if an author's
+# address block does not contain one of these aliases, that author is dropped.
+# When expanding to the full sample, each new school needs its own checked alias
+# list, because WoS abbreviations vary by institution.
 SCHOOLS = [
     {
         "school_cn": "北京理工大学",
@@ -110,6 +133,10 @@ SCHOOLS = [
     },
 ]
 
+# Schools excluded from the pilot and the reason. `must_be_absent=1` is only for
+# schools whose WOS file should not exist in the current directory; if such a file
+# appears later, the script stops so the sample can be reviewed instead of
+# silently continuing with stale assumptions.
 EXCLUDED = [
     {
         "school_cn": "北京交通大学",
@@ -156,8 +183,14 @@ EXCLUDED = [
 ]
 
 
+# =============================================================================
+# 2. Output schemas
+# =============================================================================
 # Author-paper output: one row per WOS paper-author pair after splitting
 # `Author Full Names` by semicolon.
+#
+# Caution: citation values are assigned to every retained author on a paper.
+# This is an author-level crediting rule, not fractional counting.
 PAPER_FIELDS = [
     "school_id",
     "school_cn",
@@ -184,6 +217,9 @@ PAPER_FIELDS = [
 
 # Person-year output: a balanced panel over 2000-2022 for every observed person.
 # Years without observed papers are written as zero-output rows.
+#
+# Stata consumes this file directly. `did = treated * post`, where `post` turns
+# on in each treated school's own relocation year.
 PANEL_FIELDS = [
     "school_id",
     "school_cn",
@@ -201,13 +237,18 @@ PANEL_FIELDS = [
 ]
 
 
+# =============================================================================
+# 3. Generic parsing helpers
+# =============================================================================
 def clean_text(value: object) -> str:
+    """Convert Excel values to stripped one-line strings."""
     if value is None:
         return ""
     return str(value).replace("\r", " ").replace("\n", " ").strip()
 
 
 def parse_int(value: object) -> int | None:
+    """Parse years and other integer-like Excel cells; invalid values become None."""
     if value is None or value == "":
         return None
     try:
@@ -217,6 +258,7 @@ def parse_int(value: object) -> int | None:
 
 
 def parse_float(value: object) -> float:
+    """Parse numeric outcomes; missing/invalid citation counts are treated as zero."""
     if value is None or value == "":
         return 0.0
     try:
@@ -226,6 +268,7 @@ def parse_float(value: object) -> float:
 
 
 def split_semicolon(value: object) -> list[str]:
+    """Split WoS semicolon-separated cells while dropping blank fragments."""
     text = clean_text(value)
     if not text:
         return []
@@ -267,6 +310,8 @@ def parse_current_school_authors(addresses: object, aliases: list[str], authors:
     """
     text = clean_text(addresses)
     if not text:
+        # No address information means we cannot verify current-school affiliation.
+        # Drop all authors from the paper rather than over-crediting collaborators.
         return set()
 
     normalized_aliases = [norm_org(alias) for alias in aliases if alias]
@@ -274,6 +319,10 @@ def parse_current_school_authors(addresses: object, aliases: list[str], authors:
         return set()
 
     current_school_authors: set[str] = set()
+    # Extract author-address blocks. Example:
+    #   [Li, A; Wang, B] Guangxi Univ, Coll Chem, Nanning; [Zhang, C] Other Univ...
+    # Each block gets matched independently, so only authors in school-matching
+    # blocks are retained.
     blocks = re.findall(r"\[([^\]]+)\]\s*([^\[]+?)(?=;\s*\[|$)", text)
     for block_authors, block_address in blocks:
         if not any(alias in norm_org(block_address) for alias in normalized_aliases):
@@ -284,6 +333,10 @@ def parse_current_school_authors(addresses: object, aliases: list[str], authors:
     if blocks:
         return current_school_authors
 
+    # Rare fallback: some WoS rows have no bracketed author-address mapping.
+    # For multi-author papers this is unsafe, because we cannot know which author
+    # belongs to the school. We therefore only keep single-author rows if the raw
+    # address text contains the school alias.
     if len(authors) == 1 and any(alias in norm_org(text) for alias in normalized_aliases):
         return {norm_name(authors[0])}
 
@@ -291,6 +344,7 @@ def parse_current_school_authors(addresses: object, aliases: list[str], authors:
 
 
 def require_columns(headers: list[str], required: list[str], file_name: str) -> dict[str, int]:
+    """Return a header index and stop early if any needed WoS field is missing."""
     index = {header: i for i, header in enumerate(headers)}
     missing = [col for col in required if col not in index]
     if missing:
@@ -298,6 +352,9 @@ def require_columns(headers: list[str], required: list[str], file_name: str) -> 
     return index
 
 
+# =============================================================================
+# 4. Pre-run validation and audit metadata
+# =============================================================================
 def validate_sample() -> None:
     """Fail early if the fixed sample is unbalanced or references wrong files."""
     missing_files = []
@@ -348,7 +405,11 @@ def write_metadata() -> None:
         writer.writerows(EXCLUDED)
 
 
+# =============================================================================
+# 5. Main cleaning pipeline
+# =============================================================================
 def main() -> None:
+    # Validate fixed sample and write small tables that document sample choices.
     validate_sample()
     write_metadata()
 
@@ -364,6 +425,11 @@ def main() -> None:
     persons: dict[tuple[int, str], dict[str, object]] = {}
     school_stats: list[dict[str, object]] = []
 
+    # -------------------------------------------------------------------------
+    # 5A. Build author-paper data and in-memory person-year aggregates
+    # -------------------------------------------------------------------------
+    # We stream each workbook in read-only mode. This matters because the WOS
+    # school files can be large, and the generated author-paper CSV is also large.
     with paper_path.open("w", newline="", encoding="utf-8-sig") as f_paper:
         paper_writer = csv.DictWriter(f_paper, fieldnames=PAPER_FIELDS)
         paper_writer.writeheader()
@@ -408,6 +474,8 @@ def main() -> None:
 
             for row in ws.iter_rows(min_row=2, values_only=True):
                 source_rows += 1
+
+                # Keep only papers inside the analysis window.
                 year = parse_int(row[idx["Publication Year"]])
                 if year is None or year < YEAR_MIN or year > YEAR_MAX:
                     continue
@@ -419,6 +487,8 @@ def main() -> None:
                     continue
 
                 in_window_rows += 1
+                # Core correction relative to the earlier version: identify which
+                # authors actually belong to the current school before writing rows.
                 current_school_authors = parse_current_school_authors(
                     row[idx["Addresses"]],
                     list(school["address_aliases"]),
@@ -435,6 +505,8 @@ def main() -> None:
                 for author in authors:
                     normalized = norm_name(author)
                     if normalized not in current_school_authors:
+                        # This author is a collaborator or cannot be verified as a
+                        # current-school author from Addresses, so do not count them.
                         dropped_non_school_author_rows += 1
                         continue
 
@@ -451,6 +523,8 @@ def main() -> None:
 
                     author_paper_key = (school_id, person_id, ut)
                     if author_paper_key in seen_author_paper:
+                        # Prevent duplicate school-person-paper rows from repeated
+                        # address blocks or duplicate WOS rows.
                         duplicate_author_paper_rows += 1
                         continue
                     seen_author_paper.add(author_paper_key)
@@ -473,6 +547,8 @@ def main() -> None:
                         "author_full_name": author,
                     }
 
+                    # Author-paper record used for audits and possible downstream
+                    # checks. The regression uses the aggregated person-year file.
                     paper_writer.writerow(
                         {
                             "school_id": school_id,
@@ -519,6 +595,12 @@ def main() -> None:
                 flush=True,
             )
 
+    # -------------------------------------------------------------------------
+    # 5B. Expand to balanced person-year panel
+    # -------------------------------------------------------------------------
+    # Every observed person receives one row for every year in 2000-2022.
+    # This makes zero-output years explicit and lets Stata run person fixed effects
+    # on a strongly balanced panel.
     print(f"Writing balanced person-year panel for {len(persons)} persons", flush=True)
     with panel_path.open("w", newline="", encoding="utf-8-sig") as f_panel:
         panel_writer = csv.DictWriter(f_panel, fieldnames=PANEL_FIELDS)
@@ -547,6 +629,12 @@ def main() -> None:
                     }
                 )
 
+    # -------------------------------------------------------------------------
+    # 5C. Write validation summary
+    # -------------------------------------------------------------------------
+    # This summary is intentionally small enough to commit to GitHub. It records
+    # how many author rows were retained, dropped as outside-school authors, and
+    # removed as duplicate UT-person pairs.
     with validation_path.open("w", encoding="utf-8-sig") as f:
         f.write("Sample validation summary\n")
         f.write("=========================\n")
