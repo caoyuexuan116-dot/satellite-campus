@@ -68,7 +68,7 @@ label var cites_all_db_sum "Times cited, all databases"
 label var did "Treated x post"
 label var incumbent_treated_author "Treated-school author observed before reform"
 
-di as text "Small-sample warning: only 10 school clusters; coefficients are pipeline tests, not final inference."
+di as text "Small-sample warning: few school clusters; coefficients are pipeline tests, not final inference."
 
 estimates clear
 

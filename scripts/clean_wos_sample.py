@@ -31,9 +31,10 @@ YEAR_MAX = 2022
 # =============================================================================
 # 1. Sample definition and affiliation aliases
 # =============================================================================
-# Fixed 5:5 pilot sample. Treatment schools opened same-city satellite campuses
-# within the study window; strict controls have no local relocation-workbook
-# campus record before or during the window.
+# Fixed pilot sample. Treatment schools opened same-city satellite campuses within
+# the study window; strict controls have no local relocation-workbook campus
+# record before or during the window. Central Conservatory of Music is excluded
+# from the main sample because it is too small for the control group.
 #
 # `address_aliases` are the English organization strings expected inside WoS
 # `Addresses`. These aliases are deliberately conservative: if an author's
@@ -122,15 +123,6 @@ SCHOOLS = [
         "note": "本地搬迁表无记录；学校章程列南宁市大学东路100号",
         "address_aliases": ["Guangxi Univ"],
     },
-    {
-        "school_cn": "中央音乐学院",
-        "wos_file": "Central Conservatory of Music.xlsx",
-        "treated": 0,
-        "relo_year": None,
-        "sample_role": "strict_control",
-        "note": "本地搬迁表无记录；官网联系方式列北京市西城区鲍家街43号；WOS 量较小",
-        "address_aliases": ["Cent Conservatory Mus", "Central Conservatory Mus"],
-    },
 ]
 
 # Schools excluded from the pilot and the reason. `must_be_absent=1` is only for
@@ -166,6 +158,12 @@ EXCLUDED = [
         "school_cn": "上海财经大学",
         "expected_wos_file": "Shanghai University of Finance & Economics.xlsx",
         "reason": "用户要求剔除；对照组在窗口期和之前均不得有多校区",
+        "must_be_absent": 0,
+    },
+    {
+        "school_cn": "中央音乐学院",
+        "expected_wos_file": "Central Conservatory of Music.xlsx",
+        "reason": "用户要求彻底排除；WOS 量过小，不再作为严格对照组",
         "must_be_absent": 0,
     },
     {
@@ -372,8 +370,8 @@ def validate_sample() -> None:
 
     treated_count = sum(int(s["treated"]) for s in SCHOOLS)
     control_count = len(SCHOOLS) - treated_count
-    if treated_count != 5 or control_count != 5:
-        raise RuntimeError(f"Expected 5:5 sample, got treated={treated_count}, control={control_count}")
+    if treated_count != 5 or control_count != 4:
+        raise RuntimeError(f"Expected 5:4 sample after excluding Central Conservatory, got treated={treated_count}, control={control_count}")
 
     if (WOS_DIR / "University of Jinan.xlsx").exists() and not (WOS_DIR / "Jinan University.xlsx").exists():
         raise RuntimeError("Jinan University file is missing; do not use University of Jinan.")
@@ -639,9 +637,9 @@ def main() -> None:
         f.write("Sample validation summary\n")
         f.write("=========================\n")
         f.write(f"Window: {YEAR_MIN}-{YEAR_MAX}\n")
-        f.write("Sample balance: treated=5, control=5\n")
+        f.write("Sample balance: treated=5, control=4\n")
         f.write("Panel construction: balanced person-year rows for every observed person over 2000-2022.\n")
-        f.write("Excluded schools: 南京大学 and 上海大学 because expected WOS files are absent; 北京交通大学、对外经济贸易大学、北京工业大学、上海财经大学、中国政法大学 because they fail the strict control rule.\n")
+        f.write("Excluded schools: 南京大学 and 上海大学 because expected WOS files are absent; 北京交通大学、对外经济贸易大学、北京工业大学、上海财经大学、中国政法大学 because they fail the strict control rule; 中央音乐学院 because WOS volume is too small and it is excluded from the main sample.\n")
         f.write("Control definition: no multicampus before or during the study window.\n")
         f.write("Strict controls are selected from schools with no record in the local campus relocation workbook and with WOS data.\n\n")
         for stat in school_stats:

@@ -1,9 +1,9 @@
 ﻿Sample validation summary
 =========================
 Window: 2000-2022
-Sample balance: treated=5, control=5
+Sample balance: treated=5, control=4
 Panel construction: balanced person-year rows for every observed person over 2000-2022.
-Excluded schools: 南京大学 and 上海大学 because expected WOS files are absent; 北京交通大学、对外经济贸易大学、北京工业大学、上海财经大学、中国政法大学 because they fail the strict control rule.
+Excluded schools: 南京大学 and 上海大学 because expected WOS files are absent; 北京交通大学、对外经济贸易大学、北京工业大学、上海财经大学、中国政法大学 because they fail the strict control rule; 中央音乐学院 because WOS volume is too small and it is excluded from the main sample.
 Control definition: no multicampus before or during the study window.
 Strict controls are selected from schools with no record in the local campus relocation workbook and with WOS data.
 
@@ -16,9 +16,8 @@ Strict controls are selected from schools with no record in the local campus rel
 东北林业大学	Northeast Forestry University - China.xlsx	source_rows=13303	in_window_paper_rows=13032	author_paper_rows=33766	current_school_author_rows=33766	dropped_non_school_author_rows=33619	duplicate_author_paper_rows=3	orcid_matches=3495
 东北农业大学	Northeast Agricultural University - China.xlsx	source_rows=11842	in_window_paper_rows=11617	author_paper_rows=47145	current_school_author_rows=47145	dropped_non_school_author_rows=30274	duplicate_author_paper_rows=5	orcid_matches=3073
 广西大学	Guangxi University.xlsx	source_rows=22134	in_window_paper_rows=21498	author_paper_rows=69075	current_school_author_rows=69075	dropped_non_school_author_rows=250377	duplicate_author_paper_rows=17	orcid_matches=7374
-中央音乐学院	Central Conservatory of Music.xlsx	source_rows=28	in_window_paper_rows=26	author_paper_rows=33	current_school_author_rows=33	dropped_non_school_author_rows=76	duplicate_author_paper_rows=0	orcid_matches=0
 
-Unique persons: 119234
-Person-year rows: 2742382
+Unique persons: 119209
+Person-year rows: 2741807
 Author-paper CSV: outputs\wos_author_paper_sample.csv
 Person-year CSV: outputs\wos_author_year_panel_sample.csv

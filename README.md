@@ -8,13 +8,13 @@
 - 同城新校区数据：`D:\数据\211_高校新校区_重新搜索.xlsx`
 - 年份窗口：`2000-2022`
 - 处理组：窗口期内同城新建多校区。
-- 对照组：窗口期及之前不应有多校区记录；北京交通大学、对外经济贸易大学、北京工业大学、上海财经大学、中国政法大学已按该口径剔除。
+- 对照组：窗口期及之前不应有多校区记录；北京交通大学、对外经济贸易大学、北京工业大学、上海财经大学、中国政法大学已按该口径剔除；中央音乐学院因 WOS 量过小已从主样本彻底排除。
 
 ## 主要文件
 
 - `scripts/clean_wos_sample.py`：读取 WOS 工作簿，拆分 `Author Full Names`，用 `Addresses` 的作者-地址块识别并只保留本校作者，按 `UT + person_id` 去重，生成个人-论文和个人-年面板。
 - `do/baseline_did_sample.do`：导入个人-年面板，检查多时点 DID、person_id 数量和发文分布，并运行基准 DID 与存量作者稳健性回归。
-- `outputs/sample_school_mapping.csv`：本轮严格口径 5:5 样本映射。
+- `outputs/sample_school_mapping.csv`：本轮严格口径 5 个处理组、4 个对照组样本映射。
 - `outputs/excluded_schools.csv`：剔除学校及原因。
 - `outputs/validation_summary.txt`：清洗校验摘要。
 - `outputs/baseline_did_sample.log`：Stata 回归日志。
